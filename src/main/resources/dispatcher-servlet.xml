@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+	
+	<mvc:annotation-driven/>
+	
+	 <!-- 配置Spring容器扫描多个包装载被 @Component注解的类，或者被@Component等同的注解标注 -->
+	<context:component-scan base-package="com.file.controller"></context:component-scan>
+	
+	<!-- resources静态资源的配置 -->
+	<mvc:resources mapping="/resources/**" location="/resources/" />
+	
+	<!-- 加载service层的dispatcherService－servlet.xml -->
+	<!-- <import resource="classpath:dispatcherCore-servlet.xml"/> -->
+	
+	<!-- 配置MultipartResolver用于多文件上传，使用spring的CommonsMultipartResolver -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- <property name="defaultEncoding" value="UTF-8"></property> 是请求的文件的编码格式 -->
+		<property name="maxUploadSize" value="1073741824"></property>
+		<!-- <property name="uploadTempDir" value="fileUpload/temp"></property> 上传文件的临时路径 -->
+	</bean>
+	
+</beans>
+
+	
+
+
+
+
+
+
+
+
+
+
