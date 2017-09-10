@@ -34,20 +34,33 @@ public class FileController {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
+	@ResponseBody
+	@RequestMapping(value = "upload")
+	public String uploadFile(MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
+		String fileContentType = file.getContentType();
+
+		String resourcesPath = request.getSession().getServletContext().getRealPath("/resources");
+
+		if (fileContentType.equals("application/pdf")) {
+			return uploadDocument(file, resourcesPath);
+		} else if (fileContentType.equals("image")) {
+			return uploadPicture(file, resourcesPath);
+		} else if (fileContentType.equals("video/mp4")) {
+			return uploadVideo(file, resourcesPath);
+		} else if (fileContentType.equals("application/epub+zip")) {
+
+		}
+
+		return null;
+	}
+
 	/**
 	 * 保存上传滴PDF文档和文档的封面，如果保存出错，则需要删除已保存的文件 如果顺利执行，则返回保存的文档路径，封面路径。
 	 * 文档的title，author，keywords，numberPage，createTime
 	 * 
 	 * @throws Exception
 	 */
-	@ResponseBody
-	@RequestMapping(value = "pdf", method = RequestMethod.POST)
-	public String uploadDocument(MultipartFile file, HttpServletRequest request, HttpServletResponse response)
-			throws Exception {
-		if (!file.getContentType().equals("application/pdf")) {
-			return JSONUtils.operateError("文件格式不正确");
-		}
-		String resourcesPath = request.getSession().getServletContext().getRealPath("/resources");
+	public String uploadDocument(MultipartFile file, String resourcesPath) {
 		String documentRelativeFilePath = getRelativeFilePath("book/document", "pdf");
 		String pictureRelativeFilePath = getRelativeFilePath("book/cover", "png");
 
@@ -103,7 +116,7 @@ public class FileController {
 	 * @return 返回已删除的文件，删除错误的文件，不存在的文件。
 	 */
 	@ResponseBody
-	@RequestMapping(value = "delete", method = RequestMethod.POST)
+	@RequestMapping(value = "remove", method = RequestMethod.POST)
 	public String deleteDocument(HttpServletRequest request) {
 		String resourcesPath = request.getSession().getServletContext().getRealPath("/resources");
 		List<String> removed = new LinkedList<String>();
@@ -135,62 +148,64 @@ public class FileController {
 	/**
 	 * 在某个模块下保存图片
 	 */
-	@ResponseBody
-	@RequestMapping(value = "picture", method = RequestMethod.POST)
-	public String uploadPicture(MultipartFile file, HttpServletRequest request) throws Exception {
-		System.out.println(file.getContentType());
-		if (!file.getContentType().contains("image")) {
-			return JSONUtils.operateError("文件格式不正确");
-		}
-		String resourcesPath = request.getSession().getServletContext().getRealPath("resources");
+	public String uploadPicture(MultipartFile file, String resourcesPath) {
 		String pictureRelativeFilePath = getRelativeFilePath("picture", "png");
 
 		File pictureFile = new File(resourcesPath + pictureRelativeFilePath);
 
-		BufferedImage image = ImageIO.read(file.getInputStream());
-		if (!pictureFile.getParentFile().exists()) {
-			pictureFile.mkdirs();
+		try {
+			BufferedImage image = ImageIO.read(file.getInputStream());
+			if (!pictureFile.getParentFile().exists()) {
+				pictureFile.mkdirs();
+			}
+			ImageIO.write(image, "PNG", pictureFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return JSONUtils.operateError("上传失败");
 		}
-		ImageIO.write(image, "PNG", pictureFile);
 
 		logger.info("上传picture的路径：" + pictureRelativeFilePath);
 		return JSONUtils.operateSuccess(pictureRelativeFilePath);
 	}
 
-	@ResponseBody
-	@RequestMapping(value = "video", method = RequestMethod.POST)
-	public String uploadVideo(MultipartFile file, HttpServletRequest request, String modelName) throws Exception {
+	public String uploadVideo(MultipartFile file, String resourcesPath) {
 		if (!file.getContentType().equals("video/mp4")) {
 			return JSONUtils.operateError("文件格式不正确");
 		}
-		String resourcePath = request.getSession().getServletContext().getRealPath("resources");
 		String videoRelativeFilePath = getRelativeFilePath("video", "mp4");
 
-		File videoFile = new File(resourcePath + videoRelativeFilePath);
+		File videoFile = new File(resourcesPath + videoRelativeFilePath);
 		if (!videoFile.getParentFile().exists()) {
 			videoFile.mkdirs();
 		}
-		file.transferTo(videoFile);
+		try {
+			file.transferTo(videoFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return JSONUtils.operateError("文件上传失败");
+		}
 
 		logger.info("上传video的路径：" + videoRelativeFilePath);
 		return JSONUtils.operateSuccess(videoRelativeFilePath);
 	}
 
-	@ResponseBody
-	@RequestMapping(value = "epub", method = RequestMethod.POST)
-	public String uploadBookEpub(MultipartFile file, HttpServletRequest request, String modelName) throws Exception {
+	public String uploadBookEpub(MultipartFile file, String resourcesPath) {
 		if (!file.getContentType().equals("application/epub+zip")) {
 			return JSONUtils.operateError("文件格式不正确");
 		}
 
-		String resourcePath = request.getSession().getServletContext().getRealPath("resources");
 		String epubRelativeFilePath = getRelativeFilePath("epub", "epub");
 
-		File bookFile = new File(resourcePath + epubRelativeFilePath);
+		File bookFile = new File(resourcesPath + epubRelativeFilePath);
 		if (!bookFile.getParentFile().exists()) {
 			bookFile.mkdirs();
 		}
-		file.transferTo(bookFile);
+		try {
+			file.transferTo(bookFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return JSONUtils.operateError("文件上传失败");
+		}
 
 		logger.info("上传epub的路径：" + epubRelativeFilePath);
 		return JSONUtils.operateSuccess(epubRelativeFilePath);
