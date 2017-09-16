@@ -2,8 +2,6 @@ package com.file.controller;
 
 import com.file.service.FileService;
 import com.file.utils.JSONUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,8 +21,6 @@ import java.util.Map;
 @RequestMapping(value = "file")
 public class FileController {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-
     @Autowired
     private FileService fileService;
 
@@ -36,14 +32,14 @@ public class FileController {
 
         if (fileContentType.equals("application/pdf")) {
             return fileService.uploadPDF(file, resourcesPath);
-        } else if (fileContentType.equals("image")) {
+        } else if (fileContentType.startsWith("image")) {
             return fileService.uploadPicture(file, resourcesPath);
         } else if (fileContentType.equals("video/mp4")) {
             return fileService.uploadVideo(file, resourcesPath);
         } else if (fileContentType.equals("application/epub+zip")) {
             return fileService.uploadEpub(file, resourcesPath);
         }
-        return JSONUtils.operateError("未支持该格式的文件");
+        return JSONUtils.operateError("未支持该格式的文件" + fileContentType);
     }
 
     /**
