@@ -47,7 +47,8 @@ public class FileServiceImpl implements FileService {
         PDDocument pdfDocument = null;
         try {
             pdfFile.createNewFile();
-            PDFRenderer pdfRenderer = new PDFRenderer(PDDocument.load(file.getInputStream()));
+            pdfDocument = PDDocument.load(file.getInputStream());
+            PDFRenderer pdfRenderer = new PDFRenderer(pdfDocument);
             BufferedImage coverImage = pdfRenderer.renderImage(0);
 
             ImageIO.write(coverImage, "PNG", coverFile);
