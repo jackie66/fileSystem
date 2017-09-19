@@ -14,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,16 +30,12 @@ import java.util.Map;
 @Transactional
 public class FileServiceImpl implements FileService {
 
+    private static String resourcesUrl = "";
+
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    /**
-     * 上传pdf文件函数
-     *
-     * @param file          pdf文件
-     * @param resourcesPath respurces的绝对路径
-     * @return 上传操作信息
-     */
-    public String uploadPDF(MultipartFile file, String resourcesPath) {
+    public String uploadPDF(MultipartFile file, HttpServletRequest request) {
+        String resourcesPath = request.getSession().getServletContext().getRealPath("/resources");
         String pdfRelativePath = getRelativePath("book/document", "pdf");
         String coverRelativePath = getRelativePath("book/cover", "png");
 
@@ -64,7 +62,9 @@ public class FileServiceImpl implements FileService {
         Map<String, Object> resultMap = new HashMap<String, Object>();
         PDDocumentInformation informationDocument = pdfDocument.getDocumentInformation();
         resultMap.put("filePath", pdfRelativePath);
+        resultMap.put("absoluteFilePath", getResourcesUrl(request, pdfRelativePath));
         resultMap.put("coverFilePath", coverRelativePath);
+        resultMap.put("absoluteCoverFilePath", getResourcesUrl(request, coverRelativePath));
         resultMap.put("creator", informationDocument.getCreator());
         resultMap.put("title", informationDocument.getTitle());
         resultMap.put("author", informationDocument.getAuthor());
@@ -74,18 +74,18 @@ public class FileServiceImpl implements FileService {
         resultMap.put("trapped", informationDocument.getTrapped());
         resultMap.put("numberPage", pdfDocument.getNumberOfPages());
         resultMap.put("publishTime", informationDocument.getCreationDate());
+
+        try {
+            pdfDocument.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return JSONUtils.operateSuccess(resultMap);
     }
 
-
-    /**
-     * 上传图片函数
-     *
-     * @param file          图片文件
-     * @param resourcesPath respurces的绝对路径
-     * @return 上传操作信息
-     */
-    public String uploadPicture(MultipartFile file, String resourcesPath) {
+    public String uploadPicture(MultipartFile file, HttpServletRequest request) {
+        String resourcesPath = request.getSession().getServletContext().getRealPath("/resources");
         String pictureRelativePath = getRelativePath("picture", "png");
         File pictureFile = getFile(resourcesPath, pictureRelativePath);
 
@@ -98,17 +98,16 @@ public class FileServiceImpl implements FileService {
         }
 
         logger.info("上传的图片路径:" + pictureRelativePath);
-        return JSONUtils.operateSuccess(pictureRelativePath);
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.put("filePath", pictureRelativePath);
+        resultMap.put("absoluteFilePath", getResourcesUrl(request, pictureRelativePath));
+
+        return JSONUtils.operateSuccess(resultMap);
     }
 
-    /**
-     * 上传视频文件
-     *
-     * @param file          视频文件
-     * @param resourcesPath respurces的绝对路径
-     * @return 上传操作信息
-     */
-    public String uploadVideo(MultipartFile file, String resourcesPath) {
+    public String uploadVideo(MultipartFile file, HttpServletRequest request) {
+        String resourcesPath = request.getSession().getServletContext().getRealPath("/resources");
         String videoRelativePath = getRelativePath("video", "mp4");
         File videoFile = getFile(resourcesPath, videoRelativePath);
         try {
@@ -118,19 +117,17 @@ public class FileServiceImpl implements FileService {
             return JSONUtils.operateError("视频文件上传失败");
         }
         logger.info("上传的视频路径:" + videoRelativePath);
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.put("filePath", videoRelativePath);
+        resultMap.put("absoluteFilePath", getResourcesUrl(request, videoRelativePath));
+
         return JSONUtils.operateSuccess(videoRelativePath);
     }
 
-    /**
-     * 上传epub文件
-     *
-     * @param file          epub文件
-     * @param resourcesPath respurces的绝对路径
-     * @return 上传操作信息
-     */
-    public String uploadEpub(MultipartFile file, String resourcesPath) {
+    public String uploadEpub(MultipartFile file, HttpServletRequest request) {
         String epubRelativePath = getRelativePath("epub", "epub");
-        File epubFile = getFile(resourcesPath, epubRelativePath);
+        File epubFile = getFile(request.getSession().getServletContext().getRealPath("/resources"), epubRelativePath);
         try {
             file.transferTo(epubFile);
         } catch (Exception e) {
@@ -138,7 +135,19 @@ public class FileServiceImpl implements FileService {
             return JSONUtils.operateError("文件上传失败");
         }
         logger.info("上传的epub路径:" + epubRelativePath);
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.put("filePath", epubRelativePath);
+        resultMap.put("absoluteFilePath", getResourcesUrl(request, epubRelativePath));
+
         return JSONUtils.operateSuccess(epubRelativePath);
+    }
+
+    private String getResourcesUrl(HttpServletRequest request, String filePath) {
+        if (StringUtils.isEmpty(resourcesUrl)) {
+            resourcesUrl = "http://" + request.getHeader("host") + request.getContextPath() + "/resources";
+        }
+        return resourcesUrl + filePath;
     }
 
     /**
@@ -164,4 +173,5 @@ public class FileServiceImpl implements FileService {
         }
         return file;
     }
+
 }

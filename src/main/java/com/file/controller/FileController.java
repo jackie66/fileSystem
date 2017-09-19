@@ -27,17 +27,17 @@ public class FileController {
     @ResponseBody
     @RequestMapping(value = "upload")
     public String uploadFile(MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
+
         String fileContentType = file.getContentType();
-        String resourcesPath = request.getSession().getServletContext().getRealPath("/resources");
 
         if (fileContentType.equals("application/pdf")) {
-            return fileService.uploadPDF(file, resourcesPath);
+            return fileService.uploadPDF(file, request);
         } else if (fileContentType.startsWith("image")) {
-            return fileService.uploadPicture(file, resourcesPath);
+            return fileService.uploadPicture(file, request);
         } else if (fileContentType.equals("video/mp4")) {
-            return fileService.uploadVideo(file, resourcesPath);
+            return fileService.uploadVideo(file, request);
         } else if (fileContentType.equals("application/epub+zip")) {
-            return fileService.uploadEpub(file, resourcesPath);
+            return fileService.uploadEpub(file, request);
         }
         return JSONUtils.operateError("未支持该格式的文件" + fileContentType);
     }
